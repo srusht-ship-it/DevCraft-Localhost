@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import Home from './pages/Home';
+import Team from './pages/Team';
 import ComplaintForm from './components/ComplaintForm';
 import Dashboard from './components/Dashboard';
 import './App.css';
@@ -14,6 +15,7 @@ function App() {
             <Link to="/">Home</Link>
             <Link to="/submit">Submit Complaint</Link>
             <Link to="/dashboard">Dashboard</Link>
+            <Link to="/team">Our Team</Link>
           </div>
         </nav>
         
@@ -22,6 +24,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/submit" element={<ComplaintForm />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/team" element={<Team />} />
           </Routes>
         </main>
       </div>
