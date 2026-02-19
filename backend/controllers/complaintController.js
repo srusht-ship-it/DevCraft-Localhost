@@ -116,16 +116,20 @@ exports.updateComplaintStatus = async (req, res) => {
 exports.getHotspots = async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT location, category, COUNT(*) as complaint_count 
+      `SELECT 
+         MAX(location) as location, 
+         category, 
+         COUNT(*)::integer as complaint_count 
        FROM complaints 
        WHERE created_at > NOW() - INTERVAL '30 days' 
-       GROUP BY location, category 
+       GROUP BY LOWER(TRIM(location)), category 
        HAVING COUNT(*) >= 3 
        ORDER BY complaint_count DESC 
        LIMIT 10`
     );
     res.json({ success: true, hotspots: result.rows });
   } catch (error) {
+    console.error('Hotspots error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 };
@@ -159,20 +163,21 @@ exports.getDashboardStats = async (req, res) => {
 
 async function updateHotspots(location, category) {
   try {
+    const normalizedLocation = location.trim().toLowerCase();
     const existing = await pool.query(
-      'SELECT * FROM hotspots WHERE location = $1 AND category = $2',
-      [location, category]
+      'SELECT * FROM hotspots WHERE LOWER(TRIM(location)) = $1 AND category = $2',
+      [normalizedLocation, category]
     );
     
     if (existing.rows.length > 0) {
       await pool.query(
-        'UPDATE hotspots SET complaint_count = complaint_count + 1, last_updated = CURRENT_TIMESTAMP WHERE location = $1 AND category = $2',
-        [location, category]
+        'UPDATE hotspots SET complaint_count = complaint_count + 1, last_updated = CURRENT_TIMESTAMP WHERE LOWER(TRIM(location)) = $1 AND category = $2',
+        [normalizedLocation, category]
       );
     } else {
       await pool.query(
         'INSERT INTO hotspots (location, category, complaint_count) VALUES ($1, $2, 1)',
-        [location, category]
+        [location.trim(), category]
       );
     }
   } catch (error) {

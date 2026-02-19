@@ -15,6 +15,32 @@ export default function ComplaintForm() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [recording, setRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [imageUploaded, setImageUploaded] = useState(false);
+  const [audioRecorded, setAudioRecorded] = useState(false);
+
+  const puneLocations = [
+    'Shivaji Nagar, Pune',
+    'Kothrud, Pune',
+    'Deccan, Pune',
+    'FC Road, Pune',
+    'MG Road, Pune',
+    'Camp, Pune',
+    'Hadapsar, Pune',
+    'Hinjewadi, Pune',
+    'Wakad, Pune',
+    'Baner, Pune',
+    'Aundh, Pune',
+    'Viman Nagar, Pune',
+    'Koregaon Park, Pune',
+    'Pimpri, Pune',
+    'Chinchwad, Pune',
+    'Katraj, Pune',
+    'Swargate, Pune',
+    'Bibwewadi, Pune',
+    'Kondhwa, Pune',
+    'Warje, Pune'
+  ];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -51,18 +77,34 @@ export default function ComplaintForm() {
       mediaRecorder.onstop = () => {
         const blob = new Blob(chunks, { type: 'audio/webm' });
         setAudio(new File([blob], 'recording.webm', { type: 'audio/webm' }));
+        setAudioRecorded(true);
       };
 
       mediaRecorder.start();
       setRecording(true);
+      setRecordingTime(0);
+
+      // Update timer every second
+      const timer = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
 
       setTimeout(() => {
+        clearInterval(timer);
         mediaRecorder.stop();
         stream.getTracks().forEach(track => track.stop());
         setRecording(false);
       }, 10000);
     } catch (error) {
-      alert('Microphone access denied');
+      alert('Microphone access denied. Please allow microphone access to record audio.');
+    }
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImage(file);
+      setImageUploaded(true);
     }
   };
 
@@ -101,13 +143,16 @@ export default function ComplaintForm() {
           required
           rows={5}
         />
-        <input
-          type="text"
-          placeholder="Location"
+        <select
           value={formData.location}
           onChange={(e) => setFormData({ ...formData, location: e.target.value })}
           required
-        />
+        >
+          <option value="">Select Location</option>
+          {puneLocations.map((loc) => (
+            <option key={loc} value={loc}>{loc}</option>
+          ))}
+        </select>
         <select
           value={formData.language}
           onChange={(e) => setFormData({ ...formData, language: e.target.value })}
@@ -118,17 +163,37 @@ export default function ComplaintForm() {
         </select>
 
         <div className="file-inputs">
-          <label className="file-label">
-            <Image size={20} />
-            <span>Upload Image</span>
-            <input type="file" accept="image/*" onChange={(e) => setImage(e.target.files[0])} />
+          <label className="file-label" style={{ borderColor: imageUploaded ? '#10b981' : '#e5e7eb' }}>
+            <Image size={20} color={imageUploaded ? '#10b981' : '#666'} />
+            <span>{imageUploaded ? '✓ Image Uploaded' : 'Upload Image'}</span>
+            <input type="file" accept="image/*" onChange={handleImageChange} />
           </label>
           
-          <button type="button" onClick={startRecording} disabled={recording} className="record-btn">
+          <button 
+            type="button" 
+            onClick={startRecording} 
+            disabled={recording || audioRecorded} 
+            className="record-btn"
+            style={{ backgroundColor: audioRecorded ? '#10b981' : recording ? '#ef4444' : '#f59e0b' }}
+          >
             <Mic size={20} />
-            <span>{recording ? 'Recording...' : 'Record Audio'}</span>
+            <span>
+              {audioRecorded ? '✓ Audio Recorded' : recording ? `Recording... ${recordingTime}s` : 'Record Audio (10s)'}
+            </span>
           </button>
         </div>
+
+        {imageUploaded && (
+          <div className="upload-success">
+            ✓ Image uploaded: {image?.name}
+          </div>
+        )}
+
+        {audioRecorded && (
+          <div className="upload-success">
+            ✓ Audio recorded successfully (10 seconds)
+          </div>
+        )}
 
         <button type="submit" disabled={loading} className="submit-btn">
           <Send size={20} />
