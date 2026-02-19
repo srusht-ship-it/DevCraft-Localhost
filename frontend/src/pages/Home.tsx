@@ -31,6 +31,7 @@ export default function Home() {
       <div className="cta-buttons">
         <Link to="/submit" className="cta-primary">Submit Complaint</Link>
         <Link to="/dashboard" className="cta-secondary">View Dashboard</Link>
+        <Link to="/team" className="cta-secondary">Meet Our Team</Link>
       </div>
     </div>
   );
